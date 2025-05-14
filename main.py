@@ -1,3 +1,4 @@
+import asyncio
 import math
 import numpy
 from airportsdata import Airport, load as get_airports
@@ -6,20 +7,31 @@ from fast_flights import (
     Passengers,
     Result,
     create_filter,
-    get_flights,
     get_flights_from_filter,
     search_airport,
 )
 from typing import List
 from fastapi import FastAPI
+
+# from fastapi_mcp import FastApiMCP
 from pydantic import BaseModel
+from fastmcp import FastMCP, Client
 
 app = FastAPI()
+# mcp = FastApiMCP(
+#     app
+#     # name="FlightTracker MCP",
+#     # description="MCP server for the flight tracker api",
+#     # describe_full_response_schema=True,  # Describe the full response JSON-schema instead of just a response example
+#     # describe_all_responses=True,  # Describe all the possible responses instead of just the success (2XX) response
+# )
 
 airports: dict[str, Airport] | None = None
 
+# mcp.mount()
 
-@app.get("/airports")
+
+@app.post("/airports")
 def list_airports(query: str | None = None):
     global airports
     if query:
@@ -175,3 +187,32 @@ def get_stats(result: Result):
         "low": low,
         "high": high,
     }
+
+
+@app.get("/")
+def root():
+    return {"message": "Welcome to the Flight Tracker API!"}
+
+
+# Test your MCP server with a client
+async def check_mcp(mcp: FastMCP):
+    # List the components that were created
+    tools = await mcp.get_tools()
+    resources = await mcp.get_resources()
+    templates = await mcp.get_resource_templates()
+
+    print(f"{len(tools)} Tool(s): {', '.join([t.name for t in tools.values()])}")
+    print(
+        f"{len(resources)} Resource(s): {', '.join([r.name for r in resources.values()])}"  # type: ignore
+    )
+    print(
+        f"{len(templates)} Resource Template(s): {', '.join([t.name for t in templates.values()])}"
+    )
+
+    return mcp
+
+
+if __name__ == "__main__":
+    mcp = FastMCP.from_fastapi(app=app)
+    asyncio.run(check_mcp(mcp))
+    mcp.run(transport="streamable-http", host="127.0.0.1", port=8000, path="/mcp")
