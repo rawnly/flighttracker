@@ -1,0 +1,13 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "airportsdata>=20250224",
+    "fast-flights>=2.2",
+    "fastapi[standard]>=0.115.12",
+    "numpy>=2.2.5",
+    "playwright>=1.52.0",
+]
